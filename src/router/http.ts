@@ -56,6 +56,7 @@ let expiresIn = 60000;
  */
 
 const login = async (req: Request, res: Response) => {
+  // debugger
   // const { username, password, verify } = req.body;
   // if (generateVerify !== verify) return res.json({
   //   success: false,
@@ -67,14 +68,16 @@ const login = async (req: Request, res: Response) => {
   let sql: string =
     "select * from users where username=" + "'" + username + "'";
   connection.query(sql, async function (err, data: any) {
+    
     if (data.length == 0) {
       await res.json({
         success: false,
         data: { message: Message[1] },
       });
     } else {
+      let md5psw = createHash("md5").update(password).digest("hex")
       if (
-        createHash("md5").update(password).digest("hex") == data[0].password
+        md5psw == data[0].password
       ) {
         const accessToken = jwt.sign(
           {
@@ -155,6 +158,7 @@ const login = async (req: Request, res: Response) => {
  */
 
 const register = async (req: Request, res: Response) => {
+  // debugger
   // const { username, password, verify } = req.body;
   const { username, password } = req.body;
   // if (generateVerify !== verify)
