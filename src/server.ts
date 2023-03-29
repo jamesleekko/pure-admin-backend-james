@@ -20,6 +20,7 @@ import {
   searchVague,
   upload,
   captcha,
+  getAsyncRoutes,
 } from "./router/http";
 
 app.post("/login", (req, res) => {
@@ -29,6 +30,10 @@ app.post("/login", (req, res) => {
 app.post("/register", (req, res) => {
   register(req, res);
 });
+
+app.get("/getAsyncRoutes", (req, res) => {
+  getAsyncRoutes(req, res);
+})
 
 app.put("/updateList/:id", (req, res) => {
   updateList(req, res);

@@ -7,6 +7,7 @@ import Logger from "../loaders/logger";
 import { Message } from "../utils/enums";
 import getFormatDate from "../utils/date";
 import { connection } from "../utils/mysql";
+import { permissionRoutes } from "../utils/permissionRoutes";
 import { Request, Response } from "express";
 import { createMathExpr } from "svg-captcha";
 
@@ -68,7 +69,6 @@ const login = async (req: Request, res: Response) => {
   let sql: string =
     "select * from users where username=" + "'" + username + "'";
   connection.query(sql, async function (err, data: any) {
-    
     if (data.length == 0) {
       await res.json({
         success: false,
@@ -208,6 +208,12 @@ const register = async (req: Request, res: Response) => {
     }
   });
 };
+
+const getAsyncRoutes = async (req: Request, res: Response) => {
+  // let sql: string =
+  //   "select * from users where username=" + "'" + username + "'";
+  res.json({ success: true, data: permissionRoutes })
+}
 
 /**
  * @typedef UpdateList
@@ -465,6 +471,7 @@ const captcha = async (req: Request, res: Response) => {
 export {
   login,
   register,
+  getAsyncRoutes,
   updateList,
   deleteList,
   searchPage,
