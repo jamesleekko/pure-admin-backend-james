@@ -5,11 +5,12 @@ import * as dayjs from "dayjs";
 import * as multer from "multer";
 import { user } from "./models/mysql";
 import Logger from "./loaders/logger";
-import { queryTable } from "./utils/mysql";
+import { queryTable, setCategory } from "./utils/mysql";
 const expressSwagger = require("express-swagger-generator")(app);
 expressSwagger(config.options);
 
 queryTable(user);
+setCategory();
 
 import {
   login,
