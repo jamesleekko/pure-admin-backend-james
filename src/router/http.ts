@@ -10,6 +10,7 @@ import { connection } from "../utils/mysql";
 import { permissionRoutes } from "../utils/permissionRoutes";
 import { Request, Response } from "express";
 import { createMathExpr } from "svg-captcha";
+import { generateRefreshToken } from "../utils/mysql";
 
 const utils = require("@pureadmin/utils");
 
@@ -17,7 +18,7 @@ const utils = require("@pureadmin/utils");
 let generateVerify: number;
 
 /** 过期时间 单位：毫秒 默认 1分钟过期，方便演示 */
-let expiresIn = 60000;
+let expiresIn = 60 * 1000;
 
 /**
  * @typedef Error
@@ -75,10 +76,8 @@ const login = async (req: Request, res: Response) => {
         data: { message: Message[1] },
       });
     } else {
-      let md5psw = createHash("md5").update(password).digest("hex")
-      if (
-        md5psw == data[0].password
-      ) {
+      let md5psw = createHash("md5").update(password).digest("hex");
+      if (md5psw == data[0].password) {
         const accessToken = jwt.sign(
           {
             accountId: data[0].id,
@@ -87,6 +86,7 @@ const login = async (req: Request, res: Response) => {
           { expiresIn }
         );
         if (username === "admin") {
+          const refreshtoken_admin = generateRefreshToken(data[0].id);
           await res.json({
             success: true,
             data: {
@@ -96,14 +96,14 @@ const login = async (req: Request, res: Response) => {
               roles: ["admin"],
               accessToken,
               // 这里模拟刷新token，根据自己需求修改
-              refreshToken: "eyJhbGciOiJIUzUxMiJ9.adminRefresh",
+              refreshToken: refreshtoken_admin,
               expires: new Date(new Date()).getTime() + expiresIn,
               // 这个标识是真实后端返回的接口，只是为了演示
-              pureAdminBackend:
-                "这个标识是pure-admin-backend真实后端返回的接口，只是为了演示",
+              pureAdminBackend: "后端连通标识",
             },
           });
         } else {
+          const refreshtoken_common = generateRefreshToken(data[0].id);
           await res.json({
             success: true,
             data: {
@@ -113,11 +113,10 @@ const login = async (req: Request, res: Response) => {
               roles: ["common"],
               accessToken,
               // 这里模拟刷新token，根据自己需求修改
-              refreshToken: "eyJhbGciOiJIUzUxMiJ9.adminRefresh",
+              refreshToken: refreshtoken_common,
               expires: new Date(new Date()).getTime() + expiresIn,
               // 这个标识是真实后端返回的接口，只是为了演示
-              pureAdminBackend:
-                "这个标识是pure-admin-backend真实后端返回的接口，只是为了演示",
+              pureAdminBackend: "后端连通标识",
             },
           });
         }
@@ -129,6 +128,54 @@ const login = async (req: Request, res: Response) => {
       }
     }
   });
+};
+
+const refreshToken = async (req: Request, res: Response) => {
+  const { refreshToken, username } = req.body;
+  let payload = null;
+  try {
+    payload = jwt.verify(refreshToken, secret.jwtSecret);
+  } catch (error) {
+    await res.json({
+      success: false,
+      data: { message: Message[12] },
+    });
+  }
+  if (payload.exp && payload.exp > new Date().getTime() / 1000) {
+    //find acccountId by username
+    let sql: string =
+      "select * from users where username=" + "'" + username + "'";
+    connection.query(sql, async function (err, data: any) {
+      if (data.length == 0) {
+        await res.json({
+          success: false,
+          data: { message: Message[1] },
+        });
+      } else {
+        const refreshtoken_new = generateRefreshToken(data[0].id);
+        const accessToken = jwt.sign(
+          {
+            accountId: data[0].id,
+          },
+          secret.jwtSecret,
+          { expiresIn }
+        );
+        await res.json({
+          success: true,
+          data: {
+            accessToken,
+            refreshToken: refreshtoken_new,
+            expires: new Date(new Date()).getTime() + expiresIn,
+          },
+        });
+      }
+    });
+  } else {
+    await res.json({
+      success: false,
+      data: { message: Message[13] },
+    });
+  }
 };
 
 // /**
@@ -210,10 +257,38 @@ const register = async (req: Request, res: Response) => {
 };
 
 const getAsyncRoutes = async (req: Request, res: Response) => {
-  // let sql: string =
-  //   "select * from users where username=" + "'" + username + "'";
-  res.json({ success: true, data: permissionRoutes })
-}
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, secret.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+  res.json({ success: true, data: permissionRoutes });
+};
+
+const getArticleCategory = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, secret.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+  let sql: string = "select * from categories";
+  connection.query(sql, async function (err, data) {
+    if (err) {
+      console.log(err);
+    } else {
+      await res.json({
+        success: true,
+        data: data,
+      });
+    }
+  });
+};
 
 /**
  * @typedef UpdateList
@@ -472,10 +547,12 @@ export {
   login,
   register,
   getAsyncRoutes,
+  getArticleCategory,
   updateList,
   deleteList,
   searchPage,
   searchVague,
   upload,
   captcha,
+  refreshToken,
 };

@@ -22,6 +22,8 @@ import {
   upload,
   captcha,
   getAsyncRoutes,
+  getArticleCategory,
+  refreshToken,
 } from "./router/http";
 
 app.post("/login", (req, res) => {
@@ -32,9 +34,17 @@ app.post("/register", (req, res) => {
   register(req, res);
 });
 
+app.post("/refreshToken", (req, res) => {
+  refreshToken(req, res);
+});
+
 app.get("/getAsyncRoutes", (req, res) => {
   getAsyncRoutes(req, res);
-})
+});
+
+app.get("/getArticleCategory", (req, res) => {
+  getArticleCategory(req, res);
+});
 
 app.put("/updateList/:id", (req, res) => {
   updateList(req, res);

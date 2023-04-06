@@ -12,4 +12,6 @@ export enum Message {
   "搜索信息不能为空",
   "文件上传失败",
   "文件上传成功",
+  "refreshToken解析错误",
+  "refreshToken过期"
 }

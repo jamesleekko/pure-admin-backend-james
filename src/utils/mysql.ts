@@ -2,6 +2,8 @@ import * as mysql from "mysql2";
 import mysqlConfig from "../config";
 import Logger from "../loaders/logger";
 import { category } from "../models/mysql";
+import * as jwt from "jsonwebtoken";
+import secret from "../config";
 
 /** blog数据库 */
 export const connection = mysql.createConnection(
@@ -31,4 +33,15 @@ export function setCategory(): void {
       }
     }
   });
+}
+
+export function generateRefreshToken(accountId: number) {
+  const refreshToken = jwt.sign(
+    {
+      accountId: accountId,
+    },
+    secret.jwtSecret,
+    { expiresIn: "1d" }
+  );
+  return refreshToken;
 }

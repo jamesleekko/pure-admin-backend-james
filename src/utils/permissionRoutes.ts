@@ -1,44 +1,4 @@
 export const permissionRoutes = [
-  // {
-  //   path: "/",
-  //   name: "Home",
-  //   // component: Layout,
-  //   redirect: "/welcome",
-  //   meta: {
-  //     icon: "homeFilled",
-  //     title: "首页",
-  //     rank: 0
-  //   },
-  //   children: [
-  //     {
-  //       path: "/welcome",
-  //       name: "Welcome",
-  //       // component: () => import("@/views/welcome/index.vue"),
-  //       meta: {
-  //         title: "首页",
-  //         roles: ["admin", "common"]
-  //       }
-  //     }
-  //   ]
-  // },
-  // {
-  //   path: "/article",
-  //   meta: {
-  //     title: "文章列表",
-  //     icon: "article"
-  //   },
-  //   children: [
-  //     {
-  //       path: "/article/list",
-  //       name: "Article",
-  //       // component: () => import("@/views/article/index.vue"),
-  //       meta: {
-  //         title: "文章列表",
-  //         roles: ["admin", "common"]
-  //       }
-  //     }
-  //   ]
-  // },
   {
     path: "/permission",
     meta: {
