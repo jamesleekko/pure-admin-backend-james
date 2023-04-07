@@ -39,8 +39,8 @@ let expiresIn = 60 * 1000;
 
 /**
  * @typedef Login
- * @property {string} username.required - 用户名 - eg: admin
- * @property {string} password.required - 密码 - eg: admin123
+ * @property {string} username.required - 用户名
+ * @property {string} password.required - 密码
  */
 
 /**
@@ -269,14 +269,14 @@ const getAsyncRoutes = async (req: Request, res: Response) => {
 };
 
 const getArticleCategory = async (req: Request, res: Response) => {
-  let payload = null;
-  try {
-    const authorizationHeader = req.get("Authorization") as string;
-    const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
-  } catch (error) {
-    return res.status(401).end();
-  }
+  // let payload = null;
+  // try {
+  //   const authorizationHeader = req.get("Authorization") as string;
+  //   const accessToken = authorizationHeader.substr("Bearer ".length);
+  //   payload = jwt.verify(accessToken, secret.jwtSecret);
+  // } catch (error) {
+  //   return res.status(401).end();
+  // }
   let sql: string = "select * from categories";
   connection.query(sql, async function (err, data) {
     if (err) {
