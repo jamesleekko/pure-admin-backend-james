@@ -268,6 +268,13 @@ const getAsyncRoutes = async (req: Request, res: Response) => {
   res.json({ success: true, data: permissionRoutes });
 };
 
+/**
+ * @route GET /getArticleCategory
+ * @summary 文章分类
+ * @group 内容获取 - 文章分类
+ * @returns {Array.<any>}
+ */
+
 const getArticleCategory = async (req: Request, res: Response) => {
   // let payload = null;
   // try {
