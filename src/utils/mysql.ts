@@ -1,7 +1,7 @@
 import * as mysql from "mysql2";
 import mysqlConfig from "../config";
 import Logger from "../loaders/logger";
-import { category } from "../models/mysql";
+import { category, image_types } from "../models/mysql";
 import * as jwt from "jsonwebtoken";
 import secret from "../config";
 
@@ -28,6 +28,25 @@ export function setCategory(): void {
           "insert into categories (name) values ('开发笔记'),('胡言乱语')",
           (err) => {
             err ? Logger.error(err) : Logger.info("默认分类创建成功");
+          }
+        );
+      }
+    }
+  });
+}
+
+export function setImageTypes(): void {
+  queryTable(image_types);
+
+  connection.query("select * from image_types", (err, results) => {
+    if (err) {
+      Logger.error(err);
+    } else {
+      if (Array.isArray(results) && results.length === 0) {
+        connection.query(
+          "insert into image_types (name) values ('首页banner'),('归档banner'),('文章资源')",
+          (err) => {
+            err ? Logger.error(err) : Logger.info("默认图片类型创建成功");
           }
         );
       }

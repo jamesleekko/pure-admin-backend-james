@@ -297,6 +297,28 @@ const getArticleCategory = async (req: Request, res: Response) => {
   });
 };
 
+const getImageTypes = async (req: Request, res: Response) => {
+  // let payload = null;
+  // try {
+  //   const authorizationHeader = req.get("Authorization") as string;
+  //   const accessToken = authorizationHeader.substr("Bearer ".length);
+  //   payload = jwt.verify(accessToken, secret.jwtSecret);
+  // } catch (error) {
+  //   return res.status(401).end();
+  // }
+  let sql: string = "select * from image_types";
+  connection.query(sql, async function (err, data) {
+    if (err) {
+      console.log(err);
+    } else {
+      await res.json({
+        success: true,
+        data: data,
+      });
+    }
+  });
+};
+
 /**
  * @typedef UpdateList
  * @property {string} username.required - 用户名 - eg: admin
@@ -484,7 +506,7 @@ const searchVague = async (req: Request, res: Response) => {
 const upload = async (req: Request, res: Response) => {
   // 文件存放地址
   const des_file: any = (index: number) =>
-    "./public/files/" + req.files[index].originalname;
+    "./public/files" + parseFilePath(req) + req.files[index].originalname;
   let filesLength = req.files.length as number;
   let result = [];
 
@@ -509,6 +531,10 @@ const upload = async (req: Request, res: Response) => {
         });
       });
     });
+  }
+
+  function parseFilePath(req){
+      return ''
   }
 
   asyncUpload()
@@ -550,11 +576,56 @@ const captcha = async (req: Request, res: Response) => {
   res.json({ success: true, data: { text: create.text, svg: create.data } });
 };
 
+const uploadImage = async (req: Request, res: Response) => {
+  // 图片存放地址
+  const des_file = "./public/files/" + req.files[0].originalname;
+  let result = [];
+
+  function asyncUpload() {
+    return new Promise((resolve, rejects) => {
+      fs.readFile(req.files[0].path, function (err, data) {
+        fs.writeFile(des_file, data, function (err) {
+          if (err) {
+            rejects(err);
+          } else {
+            result.push({
+              filename: req.files[0].originalname,
+              filepath: utils.getAbsolutePath(des_file),
+            });
+            resolve(result);
+          }
+        });
+      });
+    });
+  }
+
+  asyncUpload()
+    .then((fileList) => {
+      res.json({
+        success: true,
+        data: {
+          message: Message[11],
+          fileList,
+        },
+      });
+    })
+    .catch(() => {
+      res.json({
+        success: false,
+        data: {
+          message: Message[10],
+          fileList: [],
+        },
+      });
+    });
+};
+
 export {
   login,
   register,
   getAsyncRoutes,
   getArticleCategory,
+  getImageTypes,
   updateList,
   deleteList,
   searchPage,

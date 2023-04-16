@@ -5,12 +5,13 @@ import * as dayjs from "dayjs";
 import * as multer from "multer";
 import { user } from "./models/mysql";
 import Logger from "./loaders/logger";
-import { queryTable, setCategory } from "./utils/mysql";
+import { queryTable, setCategory, setImageTypes } from "./utils/mysql";
 const expressSwagger = require("express-swagger-generator")(app);
 expressSwagger(config.options);
 
 queryTable(user);
 setCategory();
+setImageTypes();
 
 import {
   login,
@@ -23,6 +24,7 @@ import {
   captcha,
   getAsyncRoutes,
   getArticleCategory,
+  getImageTypes,
   refreshToken,
 } from "./router/http";
 
@@ -44,6 +46,10 @@ app.get("/getAsyncRoutes", (req, res) => {
 
 app.get("/getArticleCategory", (req, res) => {
   getArticleCategory(req, res);
+});
+
+app.get("/getImageTypes", (req, res) => {
+  getImageTypes(req, res);
 });
 
 app.put("/updateList/:id", (req, res) => {

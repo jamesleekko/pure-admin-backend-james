@@ -5,4 +5,7 @@ const user =
 const category =
   "CREATE TABLE if not EXISTS categories(id int PRIMARY key auto_increment,name varchar(32))";
 
-export { user, category };
+const image_types =
+  "CREATE TABLE if not EXISTS image_types(id int PRIMARY key auto_increment,name varchar(32))";
+
+export { user, category, image_types };
