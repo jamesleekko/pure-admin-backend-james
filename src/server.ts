@@ -3,7 +3,7 @@ import app from "./app";
 import config from "./config";
 import * as dayjs from "dayjs";
 import * as multer from "multer";
-import { user } from "./models/mysql";
+import { user, images } from "./models/mysql";
 import Logger from "./loaders/logger";
 import { queryTable, setCategory, setImageTypes } from "./utils/mysql";
 const expressSwagger = require("express-swagger-generator")(app);
@@ -12,6 +12,7 @@ expressSwagger(config.options);
 queryTable(user);
 setCategory();
 setImageTypes();
+queryTable(images);
 
 import {
   login,
@@ -26,6 +27,7 @@ import {
   getArticleCategory,
   getImageTypes,
   refreshToken,
+  updateImg,
 } from "./router/http";
 
 app.post("/login", (req, res) => {
@@ -72,6 +74,10 @@ app.post("/searchVague", (req, res) => {
 const upload_tmp = multer({ dest: "upload_tmp/" });
 app.post("/upload", upload_tmp.any(), (req, res) => {
   upload(req, res);
+});
+
+app.post("/updateImg", (req, res) => {
+  updateImg(req, res);
 });
 
 app.get("/captcha", (req, res) => {

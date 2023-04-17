@@ -13,5 +13,6 @@ export enum Message {
   "文件上传失败",
   "文件上传成功",
   "refreshToken解析错误",
-  "refreshToken过期"
+  "refreshToken过期",
+  "图片更新成功",
 }

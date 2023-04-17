@@ -8,4 +8,7 @@ const category =
 const image_types =
   "CREATE TABLE if not EXISTS image_types(id int PRIMARY key auto_increment,name varchar(32))";
 
-export { user, category, image_types };
+const images = 
+  "CREATE TABLE if not EXISTS images(id int PRIMARY key auto_increment,name varchar(32),type int,src varchar(64),time DATETIME)";
+
+export { user, category, image_types, images };
