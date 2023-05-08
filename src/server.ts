@@ -28,7 +28,17 @@ import {
   getImageTypes,
   refreshToken,
   updateImg,
+  getImageList,
+  deleteImage,
 } from "./router/http";
+
+app.delete("/deleteImage", (req,res)=>{
+  deleteImage(req,res);
+})
+
+app.post("/imageList", (req, res) => {
+  getImageList(req, res);
+});
 
 app.post("/login", (req, res) => {
   login(req, res);

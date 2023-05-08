@@ -489,16 +489,14 @@ const searchVague = async (req: Request, res: Response) => {
   let sql: string = "select * from users";
   sql += " WHERE username LIKE " + mysql.escape("%" + username + "%");
   connection.query(sql, function (err, data) {
-    connection.query(sql, async function (err) {
-      if (err) {
-        Logger.error(err);
-      } else {
-        await res.json({
-          success: true,
-          data,
-        });
-      }
-    });
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
+      });
+    }
   });
 };
 
@@ -597,22 +595,28 @@ const updateImg = async (req: Request, res: Response) => {
     return res.status(401).end();
   }
 
-  const {title, imageType, imageUrl} = req.body;
-  if(req.body.id != null && req.body.id != undefined){
-    let sql: string = "UPDATE images SET name = ?, type = ?, src = ? WHERE id = ?";
-    connection.query(sql, [title, imageType, imageUrl, req.body.id], function (err) {
-      if (err) {
-        Logger.error(err);
-      } else {
-        res.json({
-          success: true,
-          data: { message: Message[14] },
-        });
+  const { title, imageType, imageUrl, time } = req.body;
+  if (req.body.id != null && req.body.id != undefined) {
+    let sql: string =
+      "UPDATE images SET name = ?, type = ?, src = ?, time = ? WHERE id = ?";
+    connection.query(
+      sql,
+      [title, imageType, imageUrl, time, req.body.id],
+      function (err) {
+        if (err) {
+          Logger.error(err);
+        } else {
+          res.json({
+            success: true,
+            data: { message: Message[14] },
+          });
+        }
       }
-    });
+    );
   } else {
-    let sql: string = "INSERT INTO images (name, type, src) VALUES (?, ?, ?)";
-    connection.query(sql, [title, imageType, imageUrl], function (err) {
+    let sql: string =
+      "INSERT INTO images (name, type, src, time) VALUES (?, ?, ?, ?)";
+    connection.query(sql, [title, imageType, imageUrl, time], function (err) {
       if (err) {
         Logger.error(err);
       } else {
@@ -623,7 +627,62 @@ const updateImg = async (req: Request, res: Response) => {
       }
     });
   }
-}
+};
+
+const getImageList = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, secret.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  //请求可能包含type, name等参数, 不包含则查询所有
+  const { type, name } = req.body;
+  let sql: string = "select * from images";
+  if (type != null && type != undefined) {
+    sql += " WHERE type = " + mysql.escape(type);
+  }
+  if (name != null && name != undefined) {
+    sql += " WHERE name LIKE " + mysql.escape("%" + name + "%");
+  }
+  connection.query(sql, function (err, data) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
+      });
+    }
+  });
+};
+
+const deleteImage = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, secret.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  //获取url上的参数
+  const id = req.query.id;
+  let sql: string = "DELETE FROM images WHERE id = ?";
+  connection.query(sql, [id], function (err) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true
+      });
+    }
+  });
+};
 
 export {
   login,
@@ -639,4 +698,6 @@ export {
   captcha,
   refreshToken,
   updateImg,
+  getImageList,
+  deleteImage,
 };
