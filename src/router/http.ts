@@ -686,7 +686,7 @@ const getArticleList = async (req: Request, res: Response) => {
   //请求可能包含type, name等参数, 不包含则查询所有
   const { type, name } = req.body;
   //查询除了content之外的所有字段
-  let sql: string = "SELECT id, title, type, time FROM article";
+  let sql: string = "SELECT id, title, type, time FROM articles";
   if (type != null && type != undefined) {
     sql += " WHERE type = " + mysql.escape(type);
   }
