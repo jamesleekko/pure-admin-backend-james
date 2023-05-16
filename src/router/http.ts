@@ -1,5 +1,7 @@
 import * as fs from "fs";
-import secret from "../config";
+import * as path from "path";
+import * as uuid from "uuid";
+import config from "../config";
 import * as mysql from "mysql2";
 import * as jwt from "jsonwebtoken";
 import { createHash } from "crypto";
@@ -82,7 +84,7 @@ const login = async (req: Request, res: Response) => {
           {
             accountId: data[0].id,
           },
-          secret.jwtSecret,
+          config.jwtSecret,
           { expiresIn }
         );
         if (username === "admin") {
@@ -134,7 +136,7 @@ const refreshToken = async (req: Request, res: Response) => {
   const { refreshToken, username } = req.body;
   let payload = null;
   try {
-    payload = jwt.verify(refreshToken, secret.jwtSecret);
+    payload = jwt.verify(refreshToken, config.jwtSecret);
   } catch (error) {
     await res.json({
       success: false,
@@ -157,7 +159,7 @@ const refreshToken = async (req: Request, res: Response) => {
           {
             accountId: data[0].id,
           },
-          secret.jwtSecret,
+          config.jwtSecret,
           { expiresIn }
         );
         await res.json({
@@ -261,7 +263,7 @@ const getAsyncRoutes = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -276,14 +278,6 @@ const getAsyncRoutes = async (req: Request, res: Response) => {
  */
 
 const getArticleCategory = async (req: Request, res: Response) => {
-  // let payload = null;
-  // try {
-  //   const authorizationHeader = req.get("Authorization") as string;
-  //   const accessToken = authorizationHeader.substr("Bearer ".length);
-  //   payload = jwt.verify(accessToken, secret.jwtSecret);
-  // } catch (error) {
-  //   return res.status(401).end();
-  // }
   let sql: string = "select * from categories";
   connection.query(sql, async function (err, data) {
     if (err) {
@@ -298,14 +292,6 @@ const getArticleCategory = async (req: Request, res: Response) => {
 };
 
 const getImageTypes = async (req: Request, res: Response) => {
-  // let payload = null;
-  // try {
-  //   const authorizationHeader = req.get("Authorization") as string;
-  //   const accessToken = authorizationHeader.substr("Bearer ".length);
-  //   payload = jwt.verify(accessToken, secret.jwtSecret);
-  // } catch (error) {
-  //   return res.status(401).end();
-  // }
   let sql: string = "select * from image_types";
   connection.query(sql, async function (err, data) {
     if (err) {
@@ -342,7 +328,7 @@ const updateList = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -391,7 +377,7 @@ const deleteList = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -434,7 +420,7 @@ const searchPage = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -477,7 +463,7 @@ const searchVague = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -503,10 +489,18 @@ const searchVague = async (req: Request, res: Response) => {
 // express-swagger-generator中没有文件上传文档写法，所以请使用postman调试
 const upload = async (req: Request, res: Response) => {
   // 文件存放地址
-  const des_file: any = (index: number) =>
-    "./public/files" +
-    parseFilePath(req.body.file_type) +
-    req.files[index].originalname;
+  let currentuuid = "";
+  let cur_des = "";
+  const des_file: any = (index: number) => {
+    currentuuid = uuid.v4();
+    cur_des =
+      "./public/files" +
+      parseFilePath(req.body.file_type) +
+      currentuuid +
+      path.extname(req.files[index].originalname);
+    return cur_des;
+  };
+
   let filesLength = req.files.length as number;
   let result = [];
 
@@ -519,9 +513,15 @@ const upload = async (req: Request, res: Response) => {
               rejects(err);
             } else {
               while (filesLength > 0) {
+                const fileName = uuid.v4() + path.extname(ev.originalname);
                 result.push({
                   filename: req.files[filesLength - 1].originalname,
-                  filepath: utils.getAbsolutePath(des_file(filesLength - 1)),
+                  filepath: utils.getAbsolutePath(cur_des),
+                  fileurl: `${req.protocol}://${req.hostname}:${
+                    config.port
+                  }/files${parseFilePath(
+                    req.body.file_type
+                  )}${currentuuid}${path.extname(ev.originalname)}`,
                 });
                 filesLength--;
               }
@@ -590,18 +590,18 @@ const updateImg = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
 
-  const { title, imageType, imageUrl, time } = req.body;
-  if (req.body.id != null && req.body.id != undefined) {
+  const { id, title, imageType, imageUrl, time } = req.body;
+  if (id) {
     let sql: string =
       "UPDATE images SET name = ?, type = ?, src = ?, time = ? WHERE id = ?";
     connection.query(
       sql,
-      [title, imageType, imageUrl, time, req.body.id],
+      [title, imageType, imageUrl, time, id],
       function (err) {
         if (err) {
           Logger.error(err);
@@ -622,11 +622,137 @@ const updateImg = async (req: Request, res: Response) => {
       } else {
         res.json({
           success: true,
-          data: { message: Message[14] },
+          data: { message: Message[15] },
         });
       }
     });
   }
+};
+
+const updateArticle = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, config.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  const { id, title, type, content, time } = req.body;
+  if (id) {
+    let sql: string =
+      "UPDATE articles SET name = ?, type = ?, content = ?, time = ? WHERE id = ?";
+    connection.query(
+      sql,
+      [title, type, content, time, id],
+      function (err) {
+        if (err) {
+          Logger.error(err);
+        } else {
+          res.json({
+            success: true,
+            data: { message: Message[16] },
+          });
+        }
+      }
+    );
+  } else {
+    let sql: string =
+      "INSERT INTO images (name, type, src, time) VALUES (?, ?, ?, ?)";
+    connection.query(sql, [title, type, content, time], function (err) {
+      if (err) {
+        Logger.error(err);
+      } else {
+        res.json({
+          success: true,
+          data: { message: Message[17] },
+        });
+      }
+    });
+  }
+};
+
+const getArticleList = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, config.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  //请求可能包含type, name等参数, 不包含则查询所有
+  const { type, name } = req.body;
+  //查询除了content之外的所有字段
+  let sql: string = "SELECT id, title, type, time FROM article";
+  if (type != null && type != undefined) {
+    sql += " WHERE type = " + mysql.escape(type);
+  }
+  if (name != null && name != undefined) {
+    sql += " WHERE name LIKE " + mysql.escape("%" + name + "%");
+  }
+  //按时间降序排列
+  sql += " ORDER BY time DESC";
+  connection.query(sql, function (err, data) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
+      });
+    }
+  });
+};
+
+const getArticleContent = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, config.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  const { id } = req.body;
+  let sql: string = "select * from articles WHERE id = ?";
+  connection.query(sql, [id], function (err, data) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
+      });
+    }
+  });
+};
+
+const deleteArticle = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, config.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  //获取url上的参数
+  const id = req.query.id;
+  let sql: string = "DELETE FROM articles WHERE id = ?";
+  connection.query(sql, [id], function (err) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+      });
+    }
+  });
 };
 
 const getImageList = async (req: Request, res: Response) => {
@@ -634,7 +760,7 @@ const getImageList = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -648,6 +774,8 @@ const getImageList = async (req: Request, res: Response) => {
   if (name != null && name != undefined) {
     sql += " WHERE name LIKE " + mysql.escape("%" + name + "%");
   }
+  //按时间降序排列
+  sql += " ORDER BY time DESC";
   connection.query(sql, function (err, data) {
     if (err) {
       Logger.error(err);
@@ -665,7 +793,7 @@ const deleteImage = async (req: Request, res: Response) => {
   try {
     const authorizationHeader = req.get("Authorization") as string;
     const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, secret.jwtSecret);
+    payload = jwt.verify(accessToken, config.jwtSecret);
   } catch (error) {
     return res.status(401).end();
   }
@@ -678,7 +806,24 @@ const deleteImage = async (req: Request, res: Response) => {
       Logger.error(err);
     } else {
       res.json({
-        success: true
+        success: true,
+      });
+    }
+  });
+};
+
+const getBannerImage = async (req: Request, res: Response) => {
+  //根据bannertype随机获取一张图片的url
+  const { type } = req.query;
+  let sql: string =
+    "SELECT src FROM images WHERE type = ? ORDER BY RAND() LIMIT 1";
+  connection.query(sql, [type], function (err, data) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
       });
     }
   });
@@ -698,6 +843,11 @@ export {
   captcha,
   refreshToken,
   updateImg,
+  updateArticle,
+  getArticleList,
+  getArticleContent,
+  deleteArticle,
   getImageList,
   deleteImage,
+  getBannerImage,
 };

@@ -3,16 +3,22 @@ import app from "./app";
 import config from "./config";
 import * as dayjs from "dayjs";
 import * as multer from "multer";
-import { user, images } from "./models/mysql";
+import { user, images, articles } from "./models/mysql";
 import Logger from "./loaders/logger";
 import { queryTable, setCategory, setImageTypes } from "./utils/mysql";
 const expressSwagger = require("express-swagger-generator")(app);
 expressSwagger(config.options);
 
-queryTable(user);
-setCategory();
-setImageTypes();
-queryTable(images);
+init();
+
+//查询，创建表，初始化公共数据
+function init(){
+  queryTable(user);
+  setCategory();
+  queryTable(articles);
+  setImageTypes();
+  queryTable(images);
+}
 
 import {
   login,
@@ -28,9 +34,18 @@ import {
   getImageTypes,
   refreshToken,
   updateImg,
+  updateArticle,
+  getArticleList,
+  deleteArticle,
+  getArticleContent,
   getImageList,
   deleteImage,
+  getBannerImage
 } from "./router/http";
+
+app.get("/getBannerImage", (req, res) => {
+  getBannerImage(req, res);
+});
 
 app.delete("/deleteImage", (req,res)=>{
   deleteImage(req,res);
@@ -38,6 +53,22 @@ app.delete("/deleteImage", (req,res)=>{
 
 app.post("/imageList", (req, res) => {
   getImageList(req, res);
+});
+
+app.delete("/deleteArticle", (req,res)=>{
+  deleteArticle(req,res);
+})
+
+app.post("/articleList", (req, res) => {
+  getArticleList(req, res);
+});
+
+app.post("/articleContent", (req, res) => {
+  getArticleContent(req, res);
+});
+
+app.post("/updateArticle", (req, res) => {
+  updateArticle(req, res);
 });
 
 app.post("/login", (req, res) => {
