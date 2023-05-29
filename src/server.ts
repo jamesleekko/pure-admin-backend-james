@@ -38,6 +38,7 @@ import {
   getArticleList,
   deleteArticle,
   getArticleContent,
+  getArticleGroup,
   getImageList,
   deleteImage,
   getBannerImage
@@ -65,6 +66,10 @@ app.post("/articleList", (req, res) => {
 
 app.post("/articleContent", (req, res) => {
   getArticleContent(req, res);
+});
+
+app.get("/getArticleGroup", (req, res) => {
+  getArticleGroup(req, res);
 });
 
 app.post("/updateArticle", (req, res) => {

@@ -642,24 +642,20 @@ const updateArticle = async (req: Request, res: Response) => {
   const { id, title, type, content, time } = req.body;
   if (id) {
     let sql: string =
-      "UPDATE articles SET name = ?, type = ?, content = ?, time = ? WHERE id = ?";
-    connection.query(
-      sql,
-      [title, type, content, time, id],
-      function (err) {
-        if (err) {
-          Logger.error(err);
-        } else {
-          res.json({
-            success: true,
-            data: { message: Message[16] },
-          });
-        }
+      "UPDATE articles SET title = ?, type = ?, content = ?, time = ? WHERE id = ?";
+    connection.query(sql, [title, type, content, time, id], function (err) {
+      if (err) {
+        Logger.error(err);
+      } else {
+        res.json({
+          success: true,
+          data: { message: Message[16] },
+        });
       }
-    );
+    });
   } else {
     let sql: string =
-      "INSERT INTO images (name, type, src, time) VALUES (?, ?, ?, ?)";
+      "INSERT INTO articles (title, type, content, time) VALUES (?, ?, ?, ?)";
     connection.query(sql, [title, type, content, time], function (err) {
       if (err) {
         Logger.error(err);
@@ -708,16 +704,7 @@ const getArticleList = async (req: Request, res: Response) => {
 };
 
 const getArticleContent = async (req: Request, res: Response) => {
-  let payload = null;
-  try {
-    const authorizationHeader = req.get("Authorization") as string;
-    const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, config.jwtSecret);
-  } catch (error) {
-    return res.status(401).end();
-  }
-
-  const { id } = req.body;
+  const id = req.query.id;
   let sql: string = "select * from articles WHERE id = ?";
   connection.query(sql, [id], function (err, data) {
     if (err) {
@@ -729,6 +716,59 @@ const getArticleContent = async (req: Request, res: Response) => {
       });
     }
   });
+};
+
+const getArticleGroup = async (req: Request, res: Response) => {
+  const type = req.query.type as unknown as number;
+  let sql: string = "SELECT id, title, type, time FROM articles";
+  if (type == 1) {
+    sql += " WHERE type = " + mysql.escape(type);
+  }
+  if (type == 2) {
+    sql += " WHERE type = " + mysql.escape(type);
+  }
+  sql += " ORDER BY time DESC";
+  connection.query(sql, function (err, data) {
+    console.log("query data", data);
+    if (err) {
+      Logger.error(err);
+    } else {
+      let resData = null;
+      if (type == null || type == undefined) {
+        resData = data;
+      } else {
+        resData = formatResByMonth(data);
+      }
+      res.json({
+        success: true,
+        data: resData,
+      });
+    }
+  });
+
+  function formatResByMonth(data) {
+    //根据月份分组
+    let group = {};
+    data.forEach((item) => {
+      let year = (item.time.getYear() + 1900) as string;
+      let month = (item.time.getMonth() + 1) as string;
+      let year_month = (year + "-" + month) as string;
+      if (group[year_month] == undefined) {
+        group[year_month] = [];
+      }
+      group[year_month].push(item);
+    });
+
+    let res = [];
+    for (let key in group) {
+      res.push({
+        year_month: key,
+        articles: group[key],
+      });
+    }
+
+    return res;
+  }
 };
 
 const deleteArticle = async (req: Request, res: Response) => {
@@ -850,4 +890,5 @@ export {
   getImageList,
   deleteImage,
   getBannerImage,
+  getArticleGroup,
 };
