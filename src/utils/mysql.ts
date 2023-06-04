@@ -44,7 +44,7 @@ export function setImageTypes(): void {
     } else {
       if (Array.isArray(results) && results.length === 0) {
         connection.query(
-          "insert into image_types (name) values ('首页banner'),('归档banner'),('文章资源')",
+          "insert into image_types (name) values ('首页banner'),('归档banner'),('文章资源'),('文章banner')",
           (err) => {
             err ? Logger.error(err) : Logger.info("默认图片类型创建成功");
           }

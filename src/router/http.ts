@@ -729,7 +729,6 @@ const getArticleGroup = async (req: Request, res: Response) => {
   }
   sql += " ORDER BY time DESC";
   connection.query(sql, function (err, data) {
-    console.log("query data", data);
     if (err) {
       Logger.error(err);
     } else {
