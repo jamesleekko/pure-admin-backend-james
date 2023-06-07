@@ -83,4 +83,4 @@ docs
 
 .DS_Store
 upload_tmp
-public/files/
+# public/files/
