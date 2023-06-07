@@ -3,7 +3,7 @@ import app from "./app";
 import config from "./config";
 import * as dayjs from "dayjs";
 import * as multer from "multer";
-import { user, images, articles } from "./models/mysql";
+import { user, images, articles, comments } from "./models/mysql";
 import Logger from "./loaders/logger";
 import { queryTable, setCategory, setImageTypes } from "./utils/mysql";
 const expressSwagger = require("express-swagger-generator")(app);
@@ -16,6 +16,7 @@ function init(){
   queryTable(user);
   setCategory();
   queryTable(articles);
+  queryTable(comments);
   setImageTypes();
   queryTable(images);
 }
