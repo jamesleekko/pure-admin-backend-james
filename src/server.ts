@@ -42,7 +42,8 @@ import {
   getArticleGroup,
   getImageList,
   deleteImage,
-  getBannerImage
+  getBannerImage,
+  thumbArticle
 } from "./router/http";
 
 app.get("/getBannerImage", (req, res) => {
@@ -68,6 +69,10 @@ app.post("/articleList", (req, res) => {
 app.post("/articleContent", (req, res) => {
   getArticleContent(req, res);
 });
+
+app.post("/thumbArticle",(req, res) => {
+  thumbArticle(req, res);
+})
 
 app.get("/getArticleGroup", (req, res) => {
   getArticleGroup(req, res);

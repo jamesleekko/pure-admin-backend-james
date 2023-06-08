@@ -639,11 +639,11 @@ const updateArticle = async (req: Request, res: Response) => {
     return res.status(401).end();
   }
 
-  const { id, title, type, content, time } = req.body;
+  const { id, title, type, content, time, tags } = req.body;
   if (id) {
     let sql: string =
-      "UPDATE articles SET title = ?, type = ?, content = ?, time = ? WHERE id = ?";
-    connection.query(sql, [title, type, content, time, id], function (err) {
+      "UPDATE articles SET title = ?, type = ?, content = ?, time = ?, tags = ? WHERE id = ?";
+    connection.query(sql, [title, type, content, time, tags, id], function (err) {
       if (err) {
         Logger.error(err);
       } else {
@@ -704,7 +704,8 @@ const getArticleList = async (req: Request, res: Response) => {
 };
 
 const getArticleContent = async (req: Request, res: Response) => {
-  const id = req.query.id;
+  const {id, isViewer} = req.query;
+  console.log(req.query);
   let sql: string = "select * from articles WHERE id = ?";
   connection.query(sql, [id], function (err, data) {
     if (err) {
@@ -714,9 +715,32 @@ const getArticleContent = async (req: Request, res: Response) => {
         success: true,
         data,
       });
+      if(isViewer){
+        let sql: string = "UPDATE articles SET views = views + 1 WHERE id = ?";
+        connection.query(sql, [id], function (err) {
+          if (err) {
+            Logger.error(err);
+          }
+        });
+      }
     }
   });
 };
+
+const thumbArticle = async (req: Request, res: Response) => {
+  const {id} = req.query;
+  let sql: string = "UPDATE articles SET likes = likes + 1 WHERE id = ?";
+  connection.query(sql, [id], function (err) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+      });
+    }
+  });
+};
+
 
 const getArticleGroup = async (req: Request, res: Response) => {
   const type = req.query.type as unknown as number;
@@ -890,4 +914,5 @@ export {
   deleteImage,
   getBannerImage,
   getArticleGroup,
+  thumbArticle,
 };
