@@ -643,16 +643,20 @@ const updateArticle = async (req: Request, res: Response) => {
   if (id) {
     let sql: string =
       "UPDATE articles SET title = ?, type = ?, content = ?, time = ?, tags = ? WHERE id = ?";
-    connection.query(sql, [title, type, content, time, tags, id], function (err) {
-      if (err) {
-        Logger.error(err);
-      } else {
-        res.json({
-          success: true,
-          data: { message: Message[16] },
-        });
+    connection.query(
+      sql,
+      [title, type, content, time, tags, id],
+      function (err) {
+        if (err) {
+          Logger.error(err);
+        } else {
+          res.json({
+            success: true,
+            data: { message: Message[16] },
+          });
+        }
       }
-    });
+    );
   } else {
     let sql: string =
       "INSERT INTO articles (title, type, content, time) VALUES (?, ?, ?, ?)";
@@ -680,13 +684,13 @@ const getArticleList = async (req: Request, res: Response) => {
   }
 
   //请求可能包含type, name等参数, 不包含则查询所有
-  const { type, name } = req.body;
+  const { type, name } = req.query;
   //查询除了content之外的所有字段
   let sql: string = "SELECT id, title, type, time FROM articles";
-  if (type != null && type != undefined) {
+  if (type && type != null && type != undefined) {
     sql += " WHERE type = " + mysql.escape(type);
   }
-  if (name != null && name != undefined) {
+  if (name && name != null && name != undefined) {
     sql += " WHERE name LIKE " + mysql.escape("%" + name + "%");
   }
   //按时间降序排列
@@ -704,8 +708,7 @@ const getArticleList = async (req: Request, res: Response) => {
 };
 
 const getArticleContent = async (req: Request, res: Response) => {
-  const {id, isViewer} = req.query;
-  console.log(req.query);
+  const { id, isViewer } = req.query;
   let sql: string = "select * from articles WHERE id = ?";
   connection.query(sql, [id], function (err, data) {
     if (err) {
@@ -715,7 +718,7 @@ const getArticleContent = async (req: Request, res: Response) => {
         success: true,
         data,
       });
-      if(isViewer){
+      if (isViewer) {
         let sql: string = "UPDATE articles SET views = views + 1 WHERE id = ?";
         connection.query(sql, [id], function (err) {
           if (err) {
@@ -728,19 +731,50 @@ const getArticleContent = async (req: Request, res: Response) => {
 };
 
 const thumbArticle = async (req: Request, res: Response) => {
-  const {id} = req.query;
+  const { id } = req.query;
   let sql: string = "UPDATE articles SET likes = likes + 1 WHERE id = ?";
   connection.query(sql, [id], function (err) {
     if (err) {
       Logger.error(err);
     } else {
-      res.json({
-        success: true,
+      //查询点赞数并返回
+      let sql: string = "SELECT likes FROM articles WHERE id = ?";
+      connection.query(sql, [id], function (err, data) {
+        if (err) {
+          Logger.error(err);
+        } else {
+          res.json({
+            success: true,
+            data,
+          });
+        }
       });
     }
   });
 };
 
+const cancelThumb = async (req: Request, res: Response) => {
+  const { id } = req.query;
+  let sql: string = "UPDATE articles SET likes = likes - 1 WHERE id = ?";
+  connection.query(sql, [id], function (err) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      //查询点赞数并返回
+      let sql: string = "SELECT likes FROM articles WHERE id = ?";
+      connection.query(sql, [id], function (err, data) {
+        if (err) {
+          Logger.error(err);
+        } else {
+          res.json({
+            success: true,
+            data,
+          });
+        }
+      });
+    }
+  });
+};
 
 const getArticleGroup = async (req: Request, res: Response) => {
   const type = req.query.type as unknown as number;
@@ -805,14 +839,15 @@ const deleteArticle = async (req: Request, res: Response) => {
   }
 
   //获取url上的参数
-  const id = req.query.id;
-  let sql: string = "DELETE FROM articles WHERE id = ?";
-  connection.query(sql, [id], function (err) {
+  const idList = req.query.idList;
+  let sql: string = "DELETE FROM articles WHERE id IN (?)";
+  connection.query(sql, [idList], function (err) {
     if (err) {
       Logger.error(err);
     } else {
       res.json({
         success: true,
+        data: { message: Message[18] },
       });
     }
   });
@@ -829,12 +864,12 @@ const getImageList = async (req: Request, res: Response) => {
   }
 
   //请求可能包含type, name等参数, 不包含则查询所有
-  const { type, name } = req.body;
+  const { type, name } = req.query;
   let sql: string = "select * from images";
-  if (type != null && type != undefined) {
+  if (type && type != null && type != undefined) {
     sql += " WHERE type = " + mysql.escape(type);
   }
-  if (name != null && name != undefined) {
+  if (name && name != null && name != undefined) {
     sql += " WHERE name LIKE " + mysql.escape("%" + name + "%");
   }
   //按时间降序排列
@@ -862,9 +897,9 @@ const deleteImage = async (req: Request, res: Response) => {
   }
 
   //获取url上的参数
-  const id = req.query.id;
-  let sql: string = "DELETE FROM images WHERE id = ?";
-  connection.query(sql, [id], function (err) {
+  const idList = req.query.idList;
+  let sql: string = "DELETE FROM images WHERE id IN (?)";
+  connection.query(sql, [idList], function (err) {
     if (err) {
       Logger.error(err);
     } else {
@@ -915,4 +950,5 @@ export {
   getBannerImage,
   getArticleGroup,
   thumbArticle,
+  cancelThumb
 };
