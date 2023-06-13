@@ -13,8 +13,14 @@ import { permissionRoutes } from "../utils/permissionRoutes";
 import { Request, Response } from "express";
 import { createMathExpr } from "svg-captcha";
 import { generateRefreshToken } from "../utils/mysql";
+import axios from "axios";
 
 const utils = require("@pureadmin/utils");
+const iconv = require("iconv-lite");
+const mAxios = axios.create({
+  // baseURL: "https://api.weixin.qq.com",
+  timeout: 2000,
+});
 
 /** 保存验证码 */
 let generateVerify: number;
@@ -776,6 +782,41 @@ const cancelThumb = async (req: Request, res: Response) => {
   });
 };
 
+const getQQInfo = async (req: Request, res: Response) => {
+  const { qq } = req.query;
+  const name_url = `https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins=${qq}`;
+  const avatar_url = `https://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=100`;
+  const name_res = await mAxios.get(name_url, {
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    // responseType: "blob",
+    // transformResponse: [
+    //   function (data) {
+    //     const buffer = Buffer.from(data, "binary");
+    //     const GBK_res = iconv.decode(buffer, "gbk");
+    //     const gb2312_res = iconv.decode(buffer, "gb2312");
+    //     const utf8_res = iconv.decode(buffer, "utf8");
+    //     console.log("data", data);
+    //     console.log("gbk", GBK_res);
+    //     console.log("gb2312", gb2312_res);
+    //     console.log("utf8", utf8_res);
+    //     return data;
+    //   },
+    // ],
+  });
+  console.log("name_res_data", name_res.data);
+
+  res.json({
+    success: true,
+    name: JSON.parse(
+      name_res.data.replace("portraitCallBack(", "").replace(")", "")
+    )[qq.toString()][6],
+    avatar_url,
+  });
+};
+
 const getArticleGroup = async (req: Request, res: Response) => {
   const type = req.query.type as unknown as number;
   let sql: string = "SELECT id, title, type, time FROM articles";
@@ -950,5 +991,6 @@ export {
   getBannerImage,
   getArticleGroup,
   thumbArticle,
-  cancelThumb
+  cancelThumb,
+  getQQInfo,
 };

@@ -44,7 +44,8 @@ import {
   deleteImage,
   getBannerImage,
   thumbArticle,
-  cancelThumb
+  cancelThumb,
+  getQQInfo
 } from "./router/http";
 
 app.get("/getBannerImage", (req, res) => {
@@ -125,6 +126,10 @@ app.post("/searchPage", (req, res) => {
 
 app.post("/searchVague", (req, res) => {
   searchVague(req, res);
+});
+
+app.get("/qq", (req, res) => {
+  getQQInfo(req, res);
 });
 
 // 新建存放临时文件的文件夹
