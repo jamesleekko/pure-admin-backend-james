@@ -786,35 +786,98 @@ const getQQInfo = async (req: Request, res: Response) => {
   const { qq } = req.query;
   const name_url = `https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins=${qq}`;
   const avatar_url = `https://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=100`;
-  const name_res = await mAxios.get(name_url, {
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    // responseType: "blob",
-    // transformResponse: [
-    //   function (data) {
-    //     const buffer = Buffer.from(data, "binary");
-    //     const GBK_res = iconv.decode(buffer, "gbk");
-    //     const gb2312_res = iconv.decode(buffer, "gb2312");
-    //     const utf8_res = iconv.decode(buffer, "utf8");
-    //     console.log("data", data);
-    //     console.log("gbk", GBK_res);
-    //     console.log("gb2312", gb2312_res);
-    //     console.log("utf8", utf8_res);
-    //     return data;
-    //   },
-    // ],
-  });
-  console.log("name_res_data", name_res.data);
+  // const name_res = await mAxios.get(name_url, {
+  //   headers: {
+  //     "X-Requested-With": "XMLHttpRequest",
+  //     "Content-Type": "application/x-www-form-urlencoded",
+  //   },
+  // });
 
-  res.json({
-    success: true,
-    name: JSON.parse(
-      name_res.data.replace("portraitCallBack(", "").replace(")", "")
-    )[qq.toString()][6],
-    avatar_url,
-  });
+  //从第三方接口获取qq昵称
+  const third_url = `https://api.7585.net.cn/qqtx/api.php?qq=${qq}&type=json`;
+  let third_res;
+  try {
+    third_res = await mAxios.get(third_url, {
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+  } catch (e) {
+    res.json({
+      success: false,
+      data: { message: Message[19] },
+    });
+  }
+  // console.log("third", third_res.data);
+
+  if (third_res.data.code === 1) {
+    res.json({
+      success: true,
+      name: third_res.data.name,
+      // name: JSON.parse(
+      //   name_res.data.replace("portraitCallBack(", "").replace(")", "")
+      // )[qq.toString()][6],
+      avatar_url,
+    });
+  } else {
+    res.json({
+      success: false,
+      data: { message: Message[19] },
+    });
+  }
+};
+
+const addComment = async (req: Request, res: Response) => {
+  const { article_id, pid, mainid, content, time, name, avatar, email, site } =
+    req.body;
+  let sql: string =
+    "INSERT INTO comments (article_id, pid, mainid, content, time, name, avatar_url, email, site) VALUES (?, ?, ?, ?,?, ?, ?, ?, ?)";
+  connection.query(
+    sql,
+    [article_id, pid, mainid, content, time, name, avatar, email, site],
+    function (err) {
+      if (err) {
+        Logger.error(err);
+      } else {
+        res.json({
+          success: true,
+          data: { message: Message[20] },
+        });
+      }
+    }
+  );
+};
+
+const getCommentById = async (req: Request, res: Response) => {
+  const { id, page = 1, size = 10 } = req.query;
+  let sql: string =
+    "SELECT * FROM comments WHERE article_id = ? ORDER BY time DESC LIMIT ? OFFSET ?";
+  connection.query(
+    sql,
+    [id, Number(size), Number(size) * (Number(page) - 1)],
+    function (err, data) {
+      if (err) {
+        Logger.error(err);
+      } else {
+        //查询总数
+        let sql: string = "SELECT COUNT(*) FROM comments WHERE article_id = ?";
+        connection.query(sql, [id], function (err, count) {
+          if (err) {
+            Logger.error(err);
+          } else {
+            res.json({
+              success: true,
+              data: {
+                comments: data,
+                total: count[0]["COUNT(*)"],
+              },
+            });
+          }
+        });
+      }
+    }
+  );
 };
 
 const getArticleGroup = async (req: Request, res: Response) => {
@@ -993,4 +1056,6 @@ export {
   thumbArticle,
   cancelThumb,
   getQQInfo,
+  getCommentById,
+  addComment,
 };

@@ -45,7 +45,9 @@ import {
   getBannerImage,
   thumbArticle,
   cancelThumb,
-  getQQInfo
+  getQQInfo,
+  getCommentById,
+  addComment
 } from "./router/http";
 
 app.get("/getBannerImage", (req, res) => {
@@ -130,6 +132,14 @@ app.post("/searchVague", (req, res) => {
 
 app.get("/qq", (req, res) => {
   getQQInfo(req, res);
+});
+
+app.post("/addComment", (req, res) => {
+  addComment(req, res);
+});
+
+app.get("/getComments", (req, res) => {
+  getCommentById(req, res);
 });
 
 // 新建存放临时文件的文件夹
