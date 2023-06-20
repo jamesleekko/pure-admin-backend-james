@@ -859,68 +859,125 @@ const addComment = async (req: Request, res: Response) => {
 };
 
 const getCommentById = async (req: Request, res: Response) => {
-  const { id, page = 1, size = 10 } = req.query;
-  //根据replyId字段判断是否为主评论，只获取没有replyId的项目，如果有replyId，则视为子评论，添加到主评论的replyComments列表中，同时根据replyId获取所回复评论的信息
-  let sql: string =
-    "SELECT * FROM comments WHERE article_id = ? AND replyId IS NULL ORDER BY time DESC LIMIT ?, ?";
-  connection.query(
-    sql,
-    [id, (Number(page) - 1) * Number(size), Number(size)],
-    function (err, data) {
-      if (err) {
-        Logger.error(err);
-      } else {
-        // console.log("check data", data);
-        let sql: string =
-          "SELECT * FROM comments WHERE mainId = ? AND replyId IS NOT NULL ORDER BY time DESC";
+  try {
+    const { id, page = 1, size = 10 } = req.query;
+    const mainComments = await getMainComments(id, page, size);
+    const commentsWithReply = await addReplyComments(mainComments);
+    const commentsWithReplyTarget = await addReplyTargets(commentsWithReply);
+    const totalCount = await getCommentCount(id);
+    const mainCommentCount = await getMainCommentCount(id);
 
-        //解决异步，当列表中每一项的子评论都查询完毕后，返回结果
-        let queryCount = 0;
+    res.json({
+      success: true,
+      data: {
+        comments: commentsWithReplyTarget,
+        total: totalCount,
+        mainTotal: mainCommentCount,
+      },
+    });
+  } catch (error) {
+    Logger.error(error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
 
-        Array.isArray(data) &&
-          data.forEach((item: any) => {
-            item.replyComments = [];
-            connection.query(sql, [item.id], function (err, data2) {
-              if (err) {
-                Logger.error(err);
-              } else {
-                console.log("get replys", data2);
-                item.replyComments = data2;
-                queryCount++;
-
-                if (queryCount === data.length) {
-                  //获取评论总数和主评论总数
-                  let sql: string =
-                    "SELECT COUNT(*) FROM comments WHERE article_id = ?";
-                  connection.query(sql, [id], function (err, data3) {
-                    if (err) {
-                      Logger.error(err);
-                    } else {
-                      let sql: string =
-                        "SELECT COUNT(*) FROM comments WHERE article_id = ? AND replyId IS NULL";
-                      connection.query(sql, [id], function (err, data4) {
-                        if (err) {
-                          Logger.error(err);
-                        } else {
-                          res.json({
-                            success: true,
-                            data: {
-                              comments: data,
-                              total: data3[0]["COUNT(*)"],
-                              mainTotal: data4[0]["COUNT(*)"],
-                            },
-                          });
-                        }
-                      });
-                    }
-                  });
-                }
-              }
-            });
-          });
+// 获取主评论
+const getMainComments = (id, page, size) => {
+  return new Promise((resolve, reject) => {
+    const sql =
+      "SELECT * FROM comments WHERE article_id = ? AND replyId IS NULL ORDER BY time DESC LIMIT ?, ?";
+    connection.query(
+      sql,
+      [id, (Number(page) - 1) * Number(size), Number(size)],
+      (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
       }
-    }
+    );
+  });
+};
+
+// 添加回复评论
+const addReplyComments = (mainComments) => {
+  return Promise.all(
+    mainComments.map((mainComment) => {
+      return new Promise((resolve, reject) => {
+        const sql =
+          "SELECT * FROM comments WHERE mainId = ? AND replyId IS NOT NULL ORDER BY time DESC";
+        connection.query(sql, [mainComment.id], (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            mainComment.replyComments = data;
+            resolve(mainComment);
+          }
+        });
+      });
+    })
   );
+};
+
+// 为回复评论添加回复对象
+const addReplyTarget = (replyComments) => {
+  return Promise.all(
+    replyComments.map((replyComment) => {
+      return new Promise((resolve, reject) => {
+        const sql = "SELECT * FROM comments WHERE id = ?";
+        connection.query(sql, [replyComment.replyId], (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            replyComment.replyTarget = data[0];
+            resolve(replyComment);
+          }
+        });
+      });
+    })
+  );
+}
+
+//批量处理添加回复对象
+const addReplyTargets = async (mainComments) => {
+  const mainCommentsWithReply = await Promise.all(
+    mainComments.map(async (mainComment) => {
+      const replyCommentsWithTarget = await addReplyTarget(mainComment.replyComments);
+      mainComment.replyComments = replyCommentsWithTarget;
+      return mainComment;
+    })
+  );
+  return mainCommentsWithReply;
+};
+
+// 获取评论总数
+const getCommentCount = (id) => {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT COUNT(*) FROM comments WHERE article_id = ?";
+    connection.query(sql, [id], (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data[0]["COUNT(*)"]);
+      }
+    });
+  });
+};
+
+// 获取主评论总数
+const getMainCommentCount = (id) => {
+  return new Promise((resolve, reject) => {
+    const sql =
+      "SELECT COUNT(*) FROM comments WHERE article_id = ? AND replyId IS NULL";
+    connection.query(sql, [id], (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data[0]["COUNT(*)"]);
+      }
+    });
+  });
 };
 
 const getArticleGroup = async (req: Request, res: Response) => {
