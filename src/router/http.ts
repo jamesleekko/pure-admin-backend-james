@@ -680,37 +680,71 @@ const updateArticle = async (req: Request, res: Response) => {
 };
 
 const getArticleList = async (req: Request, res: Response) => {
-  let payload = null;
+  //请求可能包含type, name等参数, 不包含则查询所有
+  const { type, name, page, size } = req.query;
   try {
-    const authorizationHeader = req.get("Authorization") as string;
-    const accessToken = authorizationHeader.substr("Bearer ".length);
-    payload = jwt.verify(accessToken, config.jwtSecret);
+    const list = await getList(type, name, page, size);
+    const total = await getTotal();
+    res.json({
+      success: true,
+      data: {
+        list: list['data'],
+        total: total['data'],
+      },
+    });
   } catch (error) {
-    return res.status(401).end();
+    Logger.error(error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 
-  //请求可能包含type, name等参数, 不包含则查询所有
-  const { type, name } = req.query;
-  //查询除了content之外的所有字段
-  let sql: string = "SELECT id, title, type, time FROM articles";
-  if (type && type != null && type != undefined) {
-    sql += " WHERE type = " + mysql.escape(type);
-  }
-  if (name && name != null && name != undefined) {
-    sql += " WHERE name LIKE " + mysql.escape("%" + name + "%");
-  }
-  //按时间降序排列
-  sql += " ORDER BY time DESC";
-  connection.query(sql, function (err, data) {
-    if (err) {
-      Logger.error(err);
-    } else {
-      res.json({
-        success: true,
-        data,
+  function getList(type, name, page, size) {
+    return new Promise((resolve, reject) => {
+      //查询除了content之外的所有字段
+      let sql: string = "SELECT id, title, type, time FROM articles";
+      if (type && type != null && type != undefined) {
+        if (sql.indexOf("WHERE") === -1) {
+          sql += " WHERE type = " + mysql.escape(type);
+        } else {
+          sql += " AND type = " + mysql.escape(type);
+        }
+      }
+      if (name && name != null && name != undefined) {
+        if (sql.indexOf("WHERE") === -1) {
+          sql += " WHERE title LIKE " + mysql.escape("%" + name + "%");
+        } else {
+          sql += " AND title LIKE " + mysql.escape("%" + name + "%");
+        }
+      }
+      sql += " ORDER BY time DESC";
+      if (page && size) {
+        sql += " LIMIT " + (Number(page) - 1) * Number(size) + ", " + size;
+      }
+      connection.query(sql, function (err, data) {
+        if (err) {
+          Logger.error(err);
+          reject(err);
+        } else {
+          resolve({
+            success: true,
+            data,
+          });
+        }
       });
-    }
-  });
+    });
+  }
+
+  function getTotal() {
+    return new Promise((resolve, reject) => {
+      let sql: string = "SELECT COUNT(id) FROM articles";
+      connection.query(sql, function (err, data) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ success: true, data: data[0]["COUNT(id)"] });
+        }
+      });
+    });
+  }
 };
 
 const getArticleContent = async (req: Request, res: Response) => {
@@ -937,13 +971,15 @@ const addReplyTarget = (replyComments) => {
       });
     })
   );
-}
+};
 
 //批量处理添加回复对象
 const addReplyTargets = async (mainComments) => {
   const mainCommentsWithReply = await Promise.all(
     mainComments.map(async (mainComment) => {
-      const replyCommentsWithTarget = await addReplyTarget(mainComment.replyComments);
+      const replyCommentsWithTarget = await addReplyTarget(
+        mainComment.replyComments
+      );
       mainComment.replyComments = replyCommentsWithTarget;
       return mainComment;
     })
