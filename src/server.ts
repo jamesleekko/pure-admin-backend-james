@@ -66,7 +66,7 @@ app.delete("/deleteArticle", (req,res)=>{
   deleteArticle(req,res);
 })
 
-app.post("/articleList", (req, res) => {
+app.get("/articleList", (req, res) => {
   getArticleList(req, res);
 });
 
