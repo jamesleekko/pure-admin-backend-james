@@ -688,8 +688,8 @@ const getArticleList = async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
-        list: list['data'],
-        total: total['data'],
+        list: list["data"],
+        total: total["data"],
       },
     });
   } catch (error) {
@@ -699,8 +699,10 @@ const getArticleList = async (req: Request, res: Response) => {
 
   function getList(type, name, page, size) {
     return new Promise((resolve, reject) => {
-      //查询除了content之外的所有字段
-      let sql: string = "SELECT id, title, type, time FROM articles";
+      //content字段查询前32个字符
+
+      let sql: string =
+        "SELECT id, title, type, LEFT(content, 32) AS preview, time FROM articles";
       if (type && type != null && type != undefined) {
         if (sql.indexOf("WHERE") === -1) {
           sql += " WHERE type = " + mysql.escape(type);
