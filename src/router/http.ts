@@ -702,7 +702,7 @@ const getArticleList = async (req: Request, res: Response) => {
       //content字段查询前32个字符
 
       let sql: string =
-        "SELECT id, title, type, LEFT(content, 32) AS preview, time FROM articles";
+        "SELECT id, title, type, views, likes, LEFT(content, 32) AS preview, time FROM articles";
       if (type && type != null && type != undefined) {
         if (sql.indexOf("WHERE") === -1) {
           sql += " WHERE type = " + mysql.escape(type);
@@ -1155,6 +1155,28 @@ const deleteImage = async (req: Request, res: Response) => {
 const getBannerImage = async (req: Request, res: Response) => {
   //根据bannertype随机获取一张图片的url
   const { type } = req.query;
+
+  //首页banner引用第三方api
+  if (Number(type) === 1) {
+    console.log("getBannerImage");
+    res.json({
+      success: true,
+      data: [{ src: "https://api.likepoems.com/img/bing" }],
+      // data: [{ src: "https://api.cyrilstudio.top/bing/image.php?rand=true" }],
+    });
+    return;
+  }
+
+  //首页文章小图引用第三方api
+  if(Number(type) === 5) {
+    console.log("getBannerImage");
+    res.json({
+      success: true,
+      data: [{ src: "https://unsplash.it/1366/768?random" }],
+    });
+    return;
+  }
+
   let sql: string =
     "SELECT src FROM images WHERE type = ? ORDER BY RAND() LIMIT 1";
   connection.query(sql, [type], function (err, data) {
