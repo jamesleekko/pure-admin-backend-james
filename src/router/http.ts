@@ -18,7 +18,6 @@ import axios from "axios";
 const utils = require("@pureadmin/utils");
 const iconv = require("iconv-lite");
 const mAxios = axios.create({
-  // baseURL: "https://api.weixin.qq.com",
   timeout: 2000,
 });
 
@@ -1168,14 +1167,16 @@ const getBannerImage = async (req: Request, res: Response) => {
   }
 
   //首页文章小图引用第三方api
-  if(Number(type) === 5) {
-    console.log("getBannerImage");
-    res.json({
-      success: true,
-      data: [{ src: "https://unsplash.it/1366/768?random" }],
-    });
-    return;
-  }
+  // if (Number(type) === 5) {
+  //   mAxios.get("https://unsplash.it/1366/768?random").then((res) => {
+  //     console.log("res", res.data);
+  //   });
+  //   res.json({
+  //     success: true,
+  //     data: [{ src: "https://unsplash.it/1366/768?random" }],
+  //   });
+  //   return;
+  // }
 
   let sql: string =
     "SELECT src FROM images WHERE type = ? ORDER BY RAND() LIMIT 1";
