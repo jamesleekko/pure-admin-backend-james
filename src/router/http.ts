@@ -916,6 +916,35 @@ const getCommentById = async (req: Request, res: Response) => {
   }
 };
 
+const getComments = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, config.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  const { page, size } = req.query;
+  let sql = "SELECT * FROM comments ORDER BY time DESC";
+  if (page && size) {
+    sql += " LIMIT " + (Number(page) - 1) * Number(size) + ", " + size;
+  } else {
+    sql += " LIMIT 0, 10";
+  }
+  connection.query(sql, function (err, data) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
+      });
+    }
+  });
+};
+
 // 获取主评论
 const getMainComments = (id, page, size) => {
   return new Promise((resolve, reject) => {
@@ -1014,6 +1043,31 @@ const getMainCommentCount = (id) => {
         resolve(data[0]["COUNT(*)"]);
       }
     });
+  });
+};
+
+const deleteComment = async (req: Request, res: Response) => {
+  let payload = null;
+  try {
+    const authorizationHeader = req.get("Authorization") as string;
+    const accessToken = authorizationHeader.substr("Bearer ".length);
+    payload = jwt.verify(accessToken, config.jwtSecret);
+  } catch (error) {
+    return res.status(401).end();
+  }
+
+  //获取url上的参数
+  const idList = req.query.idList;
+  let sql: string = "DELETE FROM comments WHERE id IN (?)";
+  connection.query(sql, [idList], function (err) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data: { message: Message[20] },
+      });
+    }
   });
 };
 
@@ -1157,7 +1211,6 @@ const getBannerImage = async (req: Request, res: Response) => {
 
   //首页banner引用第三方api
   if (Number(type) === 1) {
-    console.log("getBannerImage");
     res.json({
       success: true,
       data: [{ src: "https://api.likepoems.com/img/bing" }],
@@ -1218,5 +1271,7 @@ export {
   cancelThumb,
   getQQInfo,
   getCommentById,
+  getComments,
   addComment,
+  deleteComment,
 };

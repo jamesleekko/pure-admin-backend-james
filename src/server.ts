@@ -12,7 +12,7 @@ expressSwagger(config.options);
 init();
 
 //查询，创建表，初始化公共数据
-function init(){
+function init() {
   queryTable(user);
   setCategory();
   queryTable(articles);
@@ -47,24 +47,26 @@ import {
   cancelThumb,
   getQQInfo,
   getCommentById,
-  addComment
+  getComments,
+  addComment,
+  deleteComment,
 } from "./router/http";
 
 app.get("/getBannerImage", (req, res) => {
   getBannerImage(req, res);
 });
 
-app.delete("/deleteImage", (req,res)=>{
-  deleteImage(req,res);
-})
+app.delete("/deleteImage", (req, res) => {
+  deleteImage(req, res);
+});
 
 app.post("/imageList", (req, res) => {
   getImageList(req, res);
 });
 
-app.delete("/deleteArticle", (req,res)=>{
-  deleteArticle(req,res);
-})
+app.delete("/deleteArticle", (req, res) => {
+  deleteArticle(req, res);
+});
 
 app.get("/articleList", (req, res) => {
   getArticleList(req, res);
@@ -74,13 +76,13 @@ app.post("/articleContent", (req, res) => {
   getArticleContent(req, res);
 });
 
-app.post("/thumbArticle",(req, res) => {
+app.post("/thumbArticle", (req, res) => {
   thumbArticle(req, res);
-})
+});
 
-app.post("/cancelThumb",(req, res) => {
+app.post("/cancelThumb", (req, res) => {
   cancelThumb(req, res);
-})
+});
 
 app.get("/getArticleGroup", (req, res) => {
   getArticleGroup(req, res);
@@ -141,6 +143,14 @@ app.post("/addComment", (req, res) => {
 app.get("/getComments", (req, res) => {
   getCommentById(req, res);
 });
+
+app.get("/getCommentList", (req, res) => {
+  getComments(req, res);
+});
+
+app.delete("/deleteComment", (req, res)=>{
+  deleteComment(req, res);
+})
 
 // 新建存放临时文件的文件夹
 const upload_tmp = multer({ dest: "upload_tmp/" });
