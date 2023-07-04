@@ -926,23 +926,52 @@ const getComments = async (req: Request, res: Response) => {
     return res.status(401).end();
   }
 
-  const { page, size } = req.query;
-  let sql = "SELECT * FROM comments ORDER BY time DESC";
-  if (page && size) {
-    sql += " LIMIT " + (Number(page) - 1) * Number(size) + ", " + size;
-  } else {
-    sql += " LIMIT 0, 10";
+  try {
+    const { page, size } = req.query;
+    const list = await getCommentList(page, size);
+    const total = await getCommentTotal();
+    res.json({
+      success: true,
+      data: {
+        list,
+        total,
+      },
+    });
+  } catch (e) {
+    Logger.error(e);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
-  connection.query(sql, function (err, data) {
-    if (err) {
-      Logger.error(err);
-    } else {
-      res.json({
-        success: true,
-        data,
+
+  function getCommentList(page, size) {
+    return new Promise((resolve, reject) => {
+      let sql = "SELECT * FROM comments ORDER BY time DESC";
+      if (page && size) {
+        sql += " LIMIT " + (Number(page) - 1) * Number(size) + ", " + size;
+      } else {
+        sql += " LIMIT 0, 10";
+      }
+      connection.query(sql, function (err, data) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
       });
-    }
-  });
+    });
+  }
+
+  function getCommentTotal() {
+    return new Promise((resolve, reject) => {
+      const sql = "SELECT COUNT(*) FROM comments";
+      connection.query(sql, function (err, data) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data[0]["COUNT(*)"]);
+        }
+      });
+    });
+  }
 };
 
 // 获取主评论
