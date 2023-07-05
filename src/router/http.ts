@@ -821,12 +821,6 @@ const getQQInfo = async (req: Request, res: Response) => {
   const { qq } = req.query;
   const name_url = `https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins=${qq}`;
   const avatar_url = `https://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=100`;
-  // const name_res = await mAxios.get(name_url, {
-  //   headers: {
-  //     "X-Requested-With": "XMLHttpRequest",
-  //     "Content-Type": "application/x-www-form-urlencoded",
-  //   },
-  // });
 
   //从第三方接口获取qq昵称
   const third_url = `https://api.7585.net.cn/qqtx/api.php?qq=${qq}&type=json`;
@@ -850,15 +844,13 @@ const getQQInfo = async (req: Request, res: Response) => {
     res.json({
       success: true,
       name: third_res.data.name,
-      // name: JSON.parse(
-      //   name_res.data.replace("portraitCallBack(", "").replace(")", "")
-      // )[qq.toString()][6],
       avatar_url,
     });
   } else {
     res.json({
-      success: false,
-      data: { message: Message[19] },
+      success: true,
+      name: "",
+      avatar_url,
     });
   }
 };
