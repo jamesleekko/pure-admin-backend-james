@@ -546,6 +546,8 @@ const upload = async (req: Request, res: Response) => {
         return "/category-banner/";
       case "resource":
         return "/resource/";
+      case "article-image":
+        return "/article-image/";
       default:
         return "/";
     }
