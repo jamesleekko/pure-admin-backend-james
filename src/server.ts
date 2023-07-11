@@ -50,6 +50,7 @@ import {
   getComments,
   addComment,
   deleteComment,
+  getImageByTitleOrId,
 } from "./router/http";
 
 app.get("/getBannerImage", (req, res) => {
@@ -148,9 +149,13 @@ app.get("/getCommentList", (req, res) => {
   getComments(req, res);
 });
 
-app.delete("/deleteComment", (req, res)=>{
+app.delete("/deleteComment", (req, res) => {
   deleteComment(req, res);
-})
+});
+
+app.get("/getImage", (req, res) => {
+  getImageByTitleOrId(req, res);
+});
 
 // 新建存放临时文件的文件夹
 const upload_tmp = multer({ dest: "upload_tmp/" });

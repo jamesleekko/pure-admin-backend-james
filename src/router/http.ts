@@ -548,6 +548,8 @@ const upload = async (req: Request, res: Response) => {
         return "/resource/";
       case "article-image":
         return "/article-image/";
+      case "other-resource":
+        return "/other-resource/";
       default:
         return "/";
     }
@@ -1268,6 +1270,27 @@ const getBannerImage = async (req: Request, res: Response) => {
   });
 };
 
+const getImageByTitleOrId = async (req: Request, res: Response) => {
+  const { title, id } = req.query;
+  let sql: string = "SELECT * FROM images";
+  if (title != null && title != undefined) {
+    sql += " WHERE name LIKE " + mysql.escape("%" + title + "%");
+  }
+  if (id != null && id != undefined) {
+    sql += " WHERE id = " + mysql.escape(id);
+  }
+  connection.query(sql, function (err, data) {
+    if (err) {
+      Logger.error(err);
+    } else {
+      res.json({
+        success: true,
+        data,
+      });
+    }
+  });
+};
+
 export {
   login,
   register,
@@ -1297,4 +1320,5 @@ export {
   getComments,
   addComment,
   deleteComment,
+  getImageByTitleOrId,
 };
