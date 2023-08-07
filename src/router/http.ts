@@ -64,6 +64,16 @@ let expiresIn = 60 * 1000;
  * @security JWT
  */
 
+const parseImgSrc = (list, req) => {
+  return list.map((item) => {
+    return {
+      ...item,
+      // src: `${req.protocol}://${req.hostname}:${config.port}/files${item.src}`,
+      src: `${item.src.replace("127.0.0.1",req.hostname)}`,
+    };
+  });
+}
+
 const login = async (req: Request, res: Response) => {
   // debugger
   // const { username, password, verify } = req.body;
@@ -1282,7 +1292,7 @@ const getBannerImage = async (req: Request, res: Response) => {
     } else {
       res.json({
         success: true,
-        data,
+        data: parseImgSrc(data, req),
       });
     }
   });
@@ -1303,7 +1313,7 @@ const getImageByTitleOrId = async (req: Request, res: Response) => {
     } else {
       res.json({
         success: true,
-        data,
+        data: parseImgSrc(data, req),
       });
     }
   });
