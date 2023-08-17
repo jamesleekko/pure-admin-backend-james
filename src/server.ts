@@ -51,6 +51,7 @@ import {
   addComment,
   deleteComment,
   getImageByTitleOrId,
+  keepMysqlAlive,
 } from "./router/http";
 
 app.get("/getBannerImage", (req, res) => {
@@ -195,6 +196,8 @@ app.ws("/socket", function (ws, req) {
   });
 });
 
+let aliveInterval = null;
+
 app
   .listen(config.port, () => {
     Logger.info(`
@@ -202,8 +205,14 @@ app
     🛡️  Swagger文档地址: http://localhost:${config.port} 🛡️
     ################################################
   `);
+    //保持数据库连接
+    keepMysqlAlive();
+    aliveInterval = setInterval(() => {
+      keepMysqlAlive();
+    }, 1000 * 60 * 30);
   })
   .on("error", (err) => {
+    clearInterval(aliveInterval);
     Logger.error(err);
     process.exit(1);
   });

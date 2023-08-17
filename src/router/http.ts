@@ -69,10 +69,10 @@ const parseImgSrc = (list, req) => {
     return {
       ...item,
       // src: `${req.protocol}://${req.hostname}:${config.port}/files${item.src}`,
-      src: `${item.src.replace("127.0.0.1",req.hostname)}`,
+      src: `${item.src.replace("127.0.0.1", req.hostname)}`,
     };
   });
-}
+};
 
 const login = async (req: Request, res: Response) => {
   // debugger
@@ -931,9 +931,10 @@ const getMainComments = (id, page, size, isMessage) => {
     } else {
       sql = `SELECT * FROM comments WHERE article_id = ? AND replyId IS NULL ORDER BY time DESC LIMIT ?, ?`;
     }
-    const params = isMessage === "true"
-      ? [(Number(page) - 1) * Number(size), Number(size)]
-      : [id, (Number(page) - 1) * Number(size), Number(size)];
+    const params =
+      isMessage === "true"
+        ? [(Number(page) - 1) * Number(size), Number(size)]
+        : [id, (Number(page) - 1) * Number(size), Number(size)];
     console.log("主评论参数", sql, params);
     connection.query(sql, params, (err, data) => {
       if (err) {
@@ -1003,7 +1004,7 @@ const getCommentCount = (id, isMessage) => {
   return new Promise((resolve, reject) => {
     let sql;
     let params;
-    if(isMessage === "true") {
+    if (isMessage === "true") {
       sql = `SELECT COUNT(*) FROM comments WHERE article_id IS NULL`;
       params = [];
     } else {
@@ -1024,12 +1025,12 @@ const getCommentCount = (id, isMessage) => {
 const getMainCommentCount = (id, isMessage) => {
   return new Promise((resolve, reject) => {
     let sql;
-    if(isMessage === 'true') {
+    if (isMessage === "true") {
       sql = `SELECT COUNT(*) FROM comments WHERE article_id IS NULL AND replyId IS NULL`;
     } else {
       sql = `SELECT COUNT(*) FROM comments WHERE article_id = ? AND replyId IS NULL`;
     }
-    const params = isMessage === 'true' ? [] : [id];
+    const params = isMessage === "true" ? [] : [id];
 
     connection.query(sql, params, (err, data) => {
       if (err) {
@@ -1319,6 +1320,12 @@ const getImageByTitleOrId = async (req: Request, res: Response) => {
   });
 };
 
+const keepMysqlAlive = async () => {
+  connection.query("SELECT 1", function (err, data) {
+    console.log("keep alive", data);
+  });
+};
+
 export {
   login,
   register,
@@ -1349,4 +1356,5 @@ export {
   addComment,
   deleteComment,
   getImageByTitleOrId,
+  keepMysqlAlive,
 };
