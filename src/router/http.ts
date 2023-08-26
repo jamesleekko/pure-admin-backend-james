@@ -1320,9 +1320,9 @@ const getImageByTitleOrId = async (req: Request, res: Response) => {
   });
 };
 
+// keep alive
 const keepMysqlAlive = async () => {
   connection.query("SELECT 1", function (err, data) {
-    console.log("keep alive", data);
   });
 };
 
