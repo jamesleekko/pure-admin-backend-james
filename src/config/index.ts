@@ -54,7 +54,7 @@ export default {
     host: "localhost",
     charset: "utf8_general_ci",
     user: "root",
-    password: "root123",
+    password: "Havefun321bnm",
   },
   mongodb: {},
   sqlite: {},

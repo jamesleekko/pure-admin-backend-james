@@ -715,7 +715,7 @@ const getArticleList = async (req: Request, res: Response) => {
       //content字段查询前32个字符
 
       let sql: string =
-        "SELECT id, title, type, views, likes, LEFT(content, 128) AS preview, time FROM articles";
+        "SELECT id, title, type, views, tags, likes, LEFT(content, 128) AS preview, time FROM articles";
       if (type && type != null && type != undefined) {
         if (sql.indexOf("WHERE") === -1) {
           sql += " WHERE type = " + mysql.escape(type);
